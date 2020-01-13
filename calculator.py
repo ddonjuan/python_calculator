@@ -1,11 +1,17 @@
+import do_math
 
 class User_Input:
     #Get user input and returns it
     def menuOptions(self):
+        print("==============================================================")
+        print("==============================================================")
+        print("==============================================================")
+        print("==============================================================")
         print("This is a calculator built in python")
         print("Only numbers and valid operands such as: ")
         print("+ - * /")
         print("are allowed as inputs")
+        print("To clear current input type: clear")
         print("To exit out of the calculator type: exit")
         print("==============================================================")
         print("==============================================================")
@@ -13,6 +19,7 @@ class User_Input:
         self.arrangeData()
 
     def getInput(self):
+        #Grab User Input and saves it to var userData
         userData = input()
         print("This is the user data: ",userData)
         return userData
@@ -24,27 +31,83 @@ class User_Input:
         #returns containers
         data = self.getInput()
         dataContainers = Data_Storage()
+        num = ""
+        
         if(data == "exit"):
-            return print("You have exited the calculator")
+            print("You have exited the calculator")
+            return
+        if(data == "clear"):
+            dataContainers.clearAllInputsFromAllLists(dataContainers.numStorage, dataContainers.operandStorage)
+            self.arrangeData()
         for i in data:
-            if(ord(i) >= 48 and ord(i) <= 57):
-                dataContainers.numStorage.append(i)
-            elif(ord(i) == 42 or ord(i) == 43 or ord(i) == 45 or ord(i) == 47):     
-                dataContainers.operandStorage.append(i)    
+            while(i.isnumeric()):
+                num += i
+                i + 1
+                print("this is i: ", i, "and this is the num var: ", num)
+            dataContainers.numStorage.append(num)
+            num = ""    
+            # if(ord(i) >= 48 and ord(i) <= 57):
+            #     dataContainers.numStorage.append(i)
+            if(ord(i) == 42 or ord(i) == 43 or ord(i) == 45 or ord(i) == 47):     
+                dataContainers.operandStorage.append(i) 
             else:
-                return print("invalid input")
+                print("Invalid Input")
+                dataContainers.clearAllInputsFromAllLists(dataContainers.numStorage, dataContainers.operandStorage)
+                self.arrangeData()
         
         operations = Do_Math()
         while(len(dataContainers.numStorage) > 1):
-            operations.convertStrings(dataContainers)
+            operations.orderOfOperations(dataContainers)
+            # operations.convertStrings(dataContainers)
         
-        if(len(dataContainers.numStorage) == 1):
+        #Recursive state
+        if(len(dataContainers.numStorage) <= 1 and len(dataContainers.operandStorage) == 0):
             self.arrangeData()
+        else:
+            return print("Error: Invalid Input")    
 
 
 
 class Do_Math:
     #Grab input from containers and do math
+    def orderOfOperations(self, containers):
+        result = None
+        num1 = None
+        num2 = None
+        numIndex = None
+        operand = None
+
+
+        for i in containers.operandStorage:
+            print("this is the i in the orderOfOperations container: ", i, "Indicie is: ", containers.operandStorage.index(i))
+            if(i == "/" or i == "*"):
+               numIndex = containers.operandStorage.index(i) 
+               operand = i
+               num1 = containers.numStorage[numIndex]
+               num2 = containers.numStorage[numIndex + 1]
+               result = self.doMath(num1, num2, operand)
+               print("this is the result in the order ofOperations: ", result, "this is num1 and num2: ", num1, " ", num2)
+               print("this is the num container: ", containers.numStorage)
+               self.removeInputsFromList(containers, numIndex)
+               containers.numStorage.insert(numIndex,result)
+
+        
+        for i in containers.operandStorage:
+            print("this is the i in the orderOfOperations container: ", i, "Indicie is: ", containers.operandStorage.index(i))
+            if(i == "+" or i == "-"):
+                numIndex = containers.operandStorage.index(i)
+                operand = i
+                print("this is the containers: ", containers.operandStorage, "num container: ", containers.numStorage)
+                num1 = containers.numStorage[numIndex]
+                num2 = containers.numStorage[numIndex + 1]
+                result = self.doMath(num1, num2, operand)
+                print("this is the result in the order ofOperations: ", result, "this is num1 and num2: ", num1, " ", num2)
+                print("this is the num container: ", containers.numStorage)
+                self.removeInputsFromList(containers, numIndex)
+                containers.numStorage.insert(numIndex,result)
+
+        print("current input: ", result, " Current num storage: ", containers.numStorage)
+     
     def convertStrings(self, containers):
         numStorage = containers.numStorage
         operandStorage = containers.operandStorage
@@ -55,35 +118,51 @@ class Do_Math:
 
         result = self.doMath(firstNum, secondNum, operand)
         self.removeInputsFromList(numStorage, operandStorage)
-        numStorage.insert(0,result)
-        print("this is the result: ", result)
+        if(result != "Cannot Divide By Zero"):
+            numStorage.insert(0,result)
+        print("current input: ", result)
 
 
     def doMath(self, firstNum, secondNum, operand):
         result = None
-
+        firstNumConvert = float(firstNum)
+        secondNumConvert = float(secondNum)
+        
         if(operand == "+"):
-            result = firstNum + secondNum
+            result = firstNumConvert + secondNumConvert
         elif(operand == "-"):
-            result = firstNum - secondNum
+            result = firstNumConvert - secondNumConvert
         elif(operand == "/"):
-            result = firstNum / secondNum
+            if(secondNum == 0):
+                result = "Cannot Divide By Zero"
+            else:    
+                result = firstNumConvert / secondNumConvert
         elif(operand == "*"):
-            result = firstNum * secondNum
+            result = firstNumConvert * secondNumConvert
         else:
             return "Invalid Operand"
                    
         return result
 
-    def removeInputsFromList(self, numContainer, operandContainer):
-        del numContainer[0:2]
-        del operandContainer[0:1]
+    # def divideByZero(self, operand, secondNum):
+    #     if(operand == "/" and secondNum == 0):
+    #         result = "invalid"
 
+    def removeInputsFromList(self, containers, numIndex):
+        print("this is the num index start: ", numIndex)
+        print("this is the stop at: ", numIndex + 2)
+        del containers.numStorage[numIndex : numIndex + 2]
+        containers.operandStorage.pop(numIndex)
+        print("this is the operand contianer: ", containers.operandStorage)
 
 class Data_Storage:
     #containers for numbers and operands
     numStorage = []
     operandStorage = []
+
+    def clearAllInputsFromAllLists(self, numStorage, operandStorage):
+        numStorage.clear()
+        operandStorage.clear()
 
 
 def main():
